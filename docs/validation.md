@@ -1,4 +1,22 @@
-# Local validation record
+# Validation records
+
+## 0.2 depth-controlled search
+
+Locally validated on Python 3.12 with SymPy 1.14.0: 74 tests passed, Ruff passed,
+and the five user-facing minimal cases passed. The wheel and source distribution
+passed Twine checks. The Windows x64 Python installer was downloaded unchanged
+from python.org; its URL and SHA256 are documented in windows.zh-CN.md.
+An offline test kit bundles the package, SymPy and mpmath wheels.
+
+The new tests exercise root-level counting, both directions and all four third-level
+leaves, deeper success after bounded exhaustion, reverse-direction success,
+actual partial-fraction leaves, unbounded search, cycles, unknown propagation,
+timeouts, class output/caching, custom symbols, linearity and CLI behavior.
+The 50 original tests continue to verify the separate classic contract.
+
+The CI record below applies to 0.1. Remote 0.2 checks are recorded separately once run.
+
+## 0.1 local checks
 
 Validated on Python 3.12 in the managed Linux workspace on 2026-11-12.
 

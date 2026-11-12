@@ -1,113 +1,125 @@
 # Integral Compass 🧭
 
-**Follow the steps. Check the derivative. Know when the answer is unknown.**
+**Explore both integration-by-parts directions. Follow the successful path.**
 
-An educational Python package inspired by first-year calculus notes: DI (tabular
-integration by parts), partial fractions, and the question “does an elementary
-antiderivative exist?” It returns a verified elementary expression, `None` **only
-when SymPy's Risch backend proves non-elementarity**, or an explicit unknown outcome.
+Version 0.2 adds depth-controlled classroom integration. The original integral is
+level **1**; each integration-by-parts decision advances one level. The second
+argument is `depth=None`, meaning no depth cap. A separate 10-second worker deadline
+still applies, so an unending search returns `"unknown"` instead of hanging forever.
 
-[中文完整指南](docs/guide.zh-CN.md) · [Mathematics and limits](docs/mathematics.md) ·
-[API](docs/api.md) · [60-second demo](docs/demo.zh-CN.md) · [Publishing](docs/releasing.md)
+[中文指南](docs/guide.zh-CN.md) · [Windows installation](docs/windows.zh-CN.md) ·
+[API](docs/api.md) · [Mathematics](docs/mathematics.md) · [One-minute demo](docs/demo.zh-CN.md)
 
-## Why build this?
+## Why this project?
 
-A calculator's final expression often hides the useful lesson: which factor was
-differentiated, why a repeated denominator needs several fractions, or whether an
-unevaluated integral means a mathematical impossibility or a software limitation.
-Integral Compass makes these distinctions inspectable in a small Python API and CLI.
+The idea came from a student's own calculus notes: can a program follow DI and
+partial fractions, explore choices, and show why a particular integration works?
+Our contribution is the search strategy, depth semantics, inspectable tree,
+class-based explanation and exact derivative check. SymPy supplies algebra,
+partial-fraction decomposition and rational-term integration. The classic Risch
+backend remains available separately; we do not claim to implement full Risch.
 
-Our contribution is the classroom strategy layer, structured explanations, derivative
-verification, bounded execution and three-outcome API. SymPy supplies symbolic algebra,
-partial-fraction decomposition, rational-term integration and the existing Risch backend.
-**We do not claim to have invented DI, partial fractions, or Risch, or to implement a
-complete Risch algorithm.**
+## Install from source
 
-## Install
-
-Requires Python 3.10 or newer. From a source checkout:
+Requires Python 3.10+. PyPI publication is currently deferred.
 
 ```bash
 git clone https://github.com/wyb20080315-cyber/integral-compass.git
 cd integral-compass
 python -m venv .venv
-# macOS / Linux:
+# Linux/macOS:
 source .venv/bin/activate
-# Windows PowerShell: .venv\Scripts\Activate.ps1
+# Windows: use .venv\Scripts\python.exe directly instead of activating.
 python -m pip install .
 ```
 
-After version 0.1.0 has been published to PyPI, the index installation will be:
+If testing a development branch, check out that branch first. For a wheel downloaded
+from this chat: `python -m pip install path/to/integral_compass-0.2.0-py3-none-any.whl`.
+The offline Windows test kit includes that wheel and its dependencies.
 
-```bash
-python -m pip install integral-compass
-```
-
-The presence of this command in the documentation is not a claim that publication
-has already completed. See [release instructions](docs/releasing.md) for verification.
-
-## Try it
+## Return values
 
 ```python
-from integral_compass import analyze, integrate, IntegrationUndeterminedError
+from integral_compass import integrate, analyze, IntegralSolver
 
-result = analyze("x**2 * exp(x)")
-print(result.explain())       # DI rows, primitive and derivative check
-print(result.antiderivative)  # (x**2 - 2*x + 2)*exp(x)
-assert result.verified
+assert integrate("x**2 * exp(x)", 2) is None
+F = integrate("x**2 * exp(x)", 3)  # prints the successful steps automatically
+assert integrate("Abs(x)", 3) == "unknown"
 
-fraction = analyze("1/((x+1)*(x**2+1)**2)")
-print(fraction.explain())     # repeated quadratic partial fractions
+# Omit depth: fair iterative-deepening search, with no configured depth cap.
+F = integrate("x**2 * exp(x)", show_steps=False)
 
-assert integrate("exp(-x**2)") is None  # proven non-elementary, not nonexistent
-
-try:
-    integrate("Abs(x)")      # piecewise primitives are outside this first release
-except IntegrationUndeterminedError as error:
-    print(error.result.status)  # unknown; never silently converted to None
+problem = IntegralSolver("log(x)/(x+1)**2", 2)
+F = problem.solve()     # prints both DI and actual partial fractions on this path
+problem.show_tree()    # includes failed/unknown directions that were explored
+report = problem.result
+assert report.verified
 ```
 
-The returned expression omits the arbitrary constant `C`; the text explanation includes it.
+| `analyze(...).status` | `integrate(...)` | Meaning |
+| --- | --- | --- |
+| `elementary` | SymPy expression, without `C` | A solution passed derivative verification |
+| `exhausted` | `None` | Every generated branch within the specified depth failed |
+| `unknown` | the string `"unknown"` | A branch could not be evaluated, a cycle was unresolved, the worker failed, or time ran out |
+
+**In 0.2 search mode, `None` is not proof that an elementary primitive does not exist.**
+For example, the same `x**2*exp(x)` returns `None` at depth 2 and succeeds at depth 3.
+A success prints only the steps actually used; a basic-table-only solution does not
+invent a partial-fractions derivation. `analyze()` is silent and returns structured data.
+
+## What does the search explore?
+
+For `u * g`, try both `D=u, I=g` and `D=g, I=u`. Once a side primitive `v` is
+available, recurse on `u' * v` and recombine `u*v - integral(u'*v)`.
+A side primitive must come from the explicit basic table or rational terminal rules.
+If unavailable, that direction is unknown. A different direction may still succeed.
+
+At each level, rational functions can finish via polynomial division and partial
+fractions. Polynomials, affine rational powers and linear-argument exp/sin/cos also
+have terminal rules. These base rules are necessary even for a simple DI example.
+Sums are handled by linearity without spending a parts level.
+
+Products with more than two canonical factors try all nonempty factor bipartitions,
+in both orientations, up to eight factors. “All branches” means this finite grammar,
+not every mathematically possible rewriting or substitution. Risch/general SymPy
+integration cannot bypass the requested depth in search mode. See the mathematics guide.
+
+## CLI and minimal examples
 
 ```bash
-integral-compass 'x**2 * exp(x)'
-integral-compass '1/((x+1)*(x**2+1)**2)' --json
-python -m integral_compass 'exp(-x**2)'
-python examples/demo.py
+integral-compass 'x**2*exp(x)' --depth 2
+integral-compass 'x**2*exp(x)' --depth 3 --json
+integral-compass 'log(x)/(x+1)**2' --depth 2
+python examples/minimal_case.py
 ```
 
-## Three outcomes
+CLI exit status: 0 decided (elementary/exhausted), 2 invalid input, 3 unknown.
+Quote expressions; write multiplication as `*` and powers as `**`.
 
-| `analyze(...).status` | Meaning | `integrate(...)` |
-| --- | --- | --- |
-| `elementary` | An elementary expression passed symbolic derivative verification | SymPy expression |
-| `non_elementary` | The Risch backend returned a certified non-elementary remainder | `None` |
-| `unknown` | Unsupported case, unresolved verification, backend failure or timeout | `IntegrationUndeterminedError` |
+## The 0.1 contract is still available
 
-An ordinary unevaluated SymPy `Integral` is **not** evidence of non-elementarity.
-For example, `exp(-x**2)` has an antiderivative expressible using `erf`, but not using
-elementary functions. This package concerns **indefinite elementary integration**,
-not definite integrals, numerical quadrature, or convergence.
+```python
+from integral_compass.classic import integrate as classic_integrate
+assert classic_integrate("exp(-x**2)") is None  # Risch-proven non-elementarity
+```
 
-## Supported scope
+Classic unknown cases raise `IntegrationUndeterminedError`. Use `--classic` on the
+CLI. Its `None` has a different meaning from the depth-search API. The variable is
+now keyword-only in the new API: `integrate(expr, 3, variable=t)`.
 
-- Univariate expressions; no free symbolic parameters or arbitrary Python callables.
-- Polynomials; DI for a polynomial times `exp(a*x+b)`, `sin(a*x+b)` or `cos(a*x+b)`.
-- Rational functions with polynomial division and partial fractions, including repeated
-  linear and quadratic factors. Classroom paths cap polynomial degree at 30.
-- Additional verified elementary cases through SymPy; only DI and rational paths promise
-  classroom explanations. The exponential/logarithmic Risch implementation is incomplete.
-- Strings use a real integration variable. Expressions use `*`, `**`, rational literals,
-  `pi`, `E`, `I`, and the functions listed in the [API](docs/api.md).
-- Answers are local identities away from poles and branch boundaries. We do not compute
-  maximal domains or claim global continuity across singularities.
+## Limits and verification
 
-The expression parser uses a restricted Python AST, not `eval` or string `sympify`.
-Input size and numeric exponents are bounded. Symbolic integration and verification run
-in a child process with a default 10-second deadline. These controls are for a local
-educational tool; they do not make it a hardened public computation service.
+Single-variable symbolic expressions only; no arbitrary callables or free parameters.
+Strings use a real variable. Inputs use a restricted AST parser, not `eval`.
+The classroom rational path caps polynomial degree at 30. Unsupported absolute-value,
+piecewise, algebraic-root representation and cyclic-equation cases remain unknown.
+A computation deadline does not establish mathematical non-integrability.
 
-## Develop and contribute
+Answers are local identities away from singularities and branch boundaries; the
+package does not compute maximal domains. For real rational logarithms, derivative
+verification uses `(log|g|)'=g'/g` where g is nonzero. The returned expression omits C.
+
+## Develop and collaborate
 
 ```bash
 python -m pip install -e '.[dev]'
@@ -117,13 +129,8 @@ python -m build
 python -m twine check dist/*
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for team tasks, real Git contributions, AI-use
-disclosure and review expectations. CI tests Python 3.10–3.13 on Linux and 3.12 on Windows,
-builds a wheel and sdist, and smoke-tests the installed wheel outside the source tree.
-
-## Credits
-
-Motivated by the project proposer's personal calculus notes. Algorithms are standard
-mathematics; [SymPy](https://www.sympy.org/) is the symbolic backend. The package and
-documentation were developed with OpenAI Codex assistance. Contributors should review
-and understand the code they submit. This project is distributed under the MIT license.
+[CONTRIBUTING.md](CONTRIBUTING.md) explains genuine team contributions.
+[Publishing](docs/releasing.md) is prepared but not enabled by a PyPI account binding.
+The package and documentation were developed with OpenAI Codex assistance; contributors
+should review and understand submitted code. Algorithms are standard mathematics;
+[SymPy](https://www.sympy.org/) is the symbolic backend. MIT licensed.

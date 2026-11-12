@@ -24,6 +24,7 @@ jobs:
       - run: python -m pip install -e '.[dev]' 'sympy==${{ matrix.sympy }}'
       - run: ruff check .
       - run: python -m pytest -q
+      - run: python examples/minimal_case.py
   build:
     runs-on: ubuntu-latest
     steps:

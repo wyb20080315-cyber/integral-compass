@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "integral-compass"
-version = "0.1.0"
-description = "Explainable classroom integration with DI tables, partial fractions, and honest elementary-integrability outcomes."
+version = "0.2.0"
+description = "Depth-controlled integration-by-parts search with partial fractions and class-based explanations."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -44,4 +44,4 @@ target-version = "py310"
 packages = ["src/integral_compass"]
 
 [tool.hatch.build.targets.sdist]
-include = ["/src", "/tests", "/docs", "/examples", "/README.md", "/LICENSE", "/CONTRIBUTING.md", "/CHANGELOG.md"]
+include = ["/src", "/tests", "/docs", "/examples", "/scripts", "/README.md", "/LICENSE", "/CONTRIBUTING.md", "/CHANGELOG.md"]

@@ -5,7 +5,7 @@ from typing import Literal
 
 import sympy as sp
 
-Status = Literal["elementary", "non_elementary", "unknown"]
+Status = Literal["elementary", "non_elementary", "exhausted", "unknown"]
 
 
 @dataclass(frozen=True)
@@ -27,6 +27,12 @@ class IntegrationResult:
     reason: str = ""
     steps: tuple[Step, ...] = field(default_factory=tuple)
 
+    search_depth: int | None = None
+    depth_reached: int = 0
+    nodes_visited: int = 0
+    search_complete: bool = False
+    search_tree: tuple[dict, ...] = ()
+
     def to_dict(self) -> dict:
         return {
             "status": self.status,
@@ -37,6 +43,11 @@ class IntegrationResult:
             "method": self.method,
             "verified": self.verified,
             "reason": self.reason,
+            "search_depth": self.search_depth,
+            "depth_reached": self.depth_reached,
+            "nodes_visited": self.nodes_visited,
+            "search_complete": self.search_complete,
+            "search_tree": list(self.search_tree),
             "steps": [{"title": s.title, "explanation": s.explanation,
                        "expression": s.expression, "rows": list(s.rows)} for s in self.steps],
         }
@@ -44,6 +55,10 @@ class IntegrationResult:
     def explain(self) -> str:
         lines = [f"Integral Compass | {self.status}", f"Input: {self.integrand}",
                  f"Method: {self.method}"]
+        if self.depth_reached:
+            limit = "unbounded" if self.search_depth is None else str(self.search_depth)
+            lines.append(f"Depth limit: {limit} | Reached: {self.depth_reached} | "
+                         f"Nodes visited: {self.nodes_visited}")
         for index, step in enumerate(self.steps, 1):
             lines.extend([f"{index}. {step.title}", f"   {step.explanation}"])
             if step.expression is not None:
