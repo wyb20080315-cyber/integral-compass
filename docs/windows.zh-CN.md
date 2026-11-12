@@ -20,17 +20,17 @@ SHA256：`5da012101ba2e17113a9a1cd901e9ce1441086f2b7ecb5de06ec94163899a190`。
 
 ## 2. 最省事：离线测试包
 
-下载本次聊天提供的 `integral-compass-windows-test-kit-0.2.0.zip`，完整解压，
+下载本次聊天提供的 `integral-compass-windows-test-kit-0.3.0.zip`，完整解压，
 例如放在 `C:\code\integral-compass-test`。不要直接在压缩文件窗口里运行。
 
 测试包里有：
 
 - `setup_windows.cmd`：建立本地虚拟环境、从 wheels 安装包并运行案例。
 - `run_example.cmd`：后续重新运行案例。
-- `minimal_case.py`：你可以修改的五个最小案例。
+- `minimal_case.py`：你可以修改的七个最小案例。
 - `wheels/`：本包和 SymPy、mpmath 的安装包，不需要从 PyPI 下载。
 
-双击 `setup_windows.cmd`。看到 **All five minimal cases passed** 就说明包已导入并能运行。
+双击 `setup_windows.cmd`。看到 **All seven minimal cases passed** 就说明包已导入并能运行。
 之后编辑 `minimal_case.py`，保存，再双击 `run_example.cmd`。
 这些脚本是测试包内使用的，不是在源码仓库的 scripts 目录直接双击运行。
 
@@ -40,7 +40,7 @@ SHA256：`5da012101ba2e17113a9a1cd901e9ce1441086f2b7ecb5de06ec94163899a190`。
 
 ```powershell
 py -3.13 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --no-index --find-links .\wheels integral-compass==0.2.0
+.\.venv\Scripts\python.exe -m pip install --no-index --find-links .\wheels integral-compass==0.3.0
 .\.venv\Scripts\python.exe .\minimal_case.py
 ```
 
@@ -88,7 +88,7 @@ print("answer:", answer)
 - `py` 找不到：确认安装 Python Launcher，关闭终端后重新打开。
 - `ModuleNotFoundError`：检查运行和安装是否使用同一个 `.venv` 解释器。
 - 导入到了自己的文件：避免使用包名给脚本命名，重命名后删除旁边的 `__pycache__`。
-- 得到 None：先增加深度，不代表数学上没有原函数。
+- 得到 None：若填了深度，它表示限深搜索耗尽；若没填深度，用 analyze 看是否为 Risch 证明的 non_elementary。
 - 得到 unknown：用 `analyze(...).reason` 看原因，超时可以增加 timeout。
 - 想在编辑器里运行：选择测试包的 `.venv\Scripts\python.exe` 作为解释器。
 

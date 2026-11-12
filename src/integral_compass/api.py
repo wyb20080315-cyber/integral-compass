@@ -4,6 +4,8 @@ import json
 import math
 import subprocess
 import sys
+import time
+from dataclasses import replace
 from typing import Literal
 
 import sympy as sp
@@ -56,22 +58,49 @@ def _analyze(expression, variable, *, timeout, depth=None, mode="search"):
 
 
 def analyze(expression: str | sp.Expr, depth: int | None = None, *,
-            variable: str | sp.Symbol = "x", timeout: float = 10.0) -> IntegrationResult:
-    """Search both integration-by-parts directions; return a structured outcome.
+            variable: str | sp.Symbol = "x", timeout: float | None = None) -> IntegrationResult:
+    """Use auto Risch+search when depth is None, otherwise bounded search only.
 
-    The root is level 1. None imposes no depth limit; the worker deadline still
-    applies. This search uses classroom rules, not the classic Risch backend.
+    The root is level 1. None imposes no depth limit. Auto mode has a shared
+    time budget (10 seconds by default): 30% for Risch, the remainder for step search.
     """
-    return _analyze(expression, variable, timeout=timeout, depth=depth)
+    if depth is not None:
+        return _analyze(expression, variable, timeout=10.0 if timeout is None else timeout,
+                        depth=depth)
+    budget = 10.0 if timeout is None else timeout
+    if isinstance(budget, bool) or not isinstance(budget, (int, float)) or not (
+            math.isfinite(budget) and budget > 0):
+        raise ValueError("timeout must be a finite positive number of seconds")
+    started = time.monotonic()
+    precheck = _analyze(expression, variable, timeout=budget * 0.3, mode="risch")
+    if precheck.status == "non_elementary":
+        return precheck
+    remaining = budget - (time.monotonic() - started)
+    search = (_analyze(expression, variable, timeout=remaining) if remaining > 0 else
+              replace(precheck, status="unknown", antiderivative=None, method="timeout",
+                      verified=False, reason="The total time budget was exhausted before step search."))
+    if search.status == "elementary":
+        note = Step("Automatic Risch precheck", "Risch precheck: " + precheck.status +
+                    ". The derivation below was found by the classroom search.")
+        return replace(search, steps=(note, *search.steps))
+    if precheck.status == "elementary":
+        return replace(
+            precheck, method="risch_fallback", search_tree=search.search_tree,
+            depth_reached=search.depth_reached, nodes_visited=search.nodes_visited,
+            reason="Risch supplied a verified elementary primitive; the classroom search "
+                   f"did not produce a path ({search.method}).",
+            steps=precheck.steps + (Step("Classroom search", search.reason),))
+    return replace(search, steps=(Step("Automatic Risch precheck", precheck.reason), *search.steps))
 
 
 def integrate(expression: str | sp.Expr, depth: int | None = None, *,
-              variable: str | sp.Symbol = "x", timeout: float = 10.0,
+              variable: str | sp.Symbol = "x", timeout: float | None = None,
               show_steps: bool = True) -> sp.Expr | Literal["unknown"] | None:
-    """Return a primitive, 'unknown', or None for a fully exhausted bounded search.
+    """Return a primitive, 'unknown', or None; inspect analyze().status for why None.
 
     A successful call prints its actual solution path unless show_steps=False.
-    None is relative to the supplied depth and rules, not a non-elementarity proof.
+    None means exhausted for a bounded search, or Risch-proven non-elementarity
+    in automatic mode. Unknown means no decision, never a proof of impossibility.
     """
     return IntegralSolver(expression, depth, variable=variable, timeout=timeout).solve(
         show_steps=show_steps)
@@ -81,7 +110,7 @@ class IntegralSolver:
     """Keep a problem, cache its result, and display its solution or search tree."""
 
     def __init__(self, expression: str | sp.Expr, depth: int | None = None, *,
-                 variable: str | sp.Symbol = "x", timeout: float = 10.0):
+                 variable: str | sp.Symbol = "x", timeout: float | None = None):
         self.expression = expression
         self.depth = depth
         self.variable = variable
@@ -103,7 +132,7 @@ class IntegralSolver:
             if show_steps:
                 self.show()
             return result.antiderivative
-        if result.status == "exhausted":
+        if result.status in ("exhausted", "non_elementary"):
             return None
         return "unknown"
 

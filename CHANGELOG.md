@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0
+
+- Detect return to the original integrand, including constant multiples, before the depth boundary.
+- Carry full integration-by-parts coefficients to solve cyclic equations; reject J=J identities.
+- When depth is None, automatically combine Risch decisions with classroom search.
+- Share the total time budget (default 10 seconds): 30% for Risch, the remainder for search.
+- Preserve finite-depth None/exhausted, add automatic None/non_elementary, keep unknown distinct.
+- Add cyclic/default-mode cases and refresh the Windows offline kit.
+
 ## 0.2.0
 
 - Second argument is depth=None; root is level 1 and parts decisions advance a level.

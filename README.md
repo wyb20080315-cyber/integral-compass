@@ -2,10 +2,11 @@
 
 **Explore both integration-by-parts directions. Follow the successful path.**
 
-Version 0.2 adds depth-controlled classroom integration. The original integral is
+Version 0.3 adds cyclic-equation solving and automatic Risch decisions. The original integral is
 level **1**; each integration-by-parts decision advances one level. The second
-argument is `depth=None`, meaning no depth cap. A separate 10-second worker deadline
-still applies, so an unending search returns `"unknown"` instead of hanging forever.
+argument is `depth=None`, meaning no depth cap. Without a depth limit, automatic
+mode combines Risch and classroom search under a shared 10-second budget.
+An explicit `timeout` changes the budget without disabling Risch.
 
 [中文指南](docs/guide.zh-CN.md) · [Windows installation](docs/windows.zh-CN.md) ·
 [API](docs/api.md) · [Mathematics](docs/mathematics.md) · [One-minute demo](docs/demo.zh-CN.md)
@@ -34,7 +35,7 @@ python -m pip install .
 ```
 
 If testing a development branch, check out that branch first. For a wheel downloaded
-from this chat: `python -m pip install path/to/integral_compass-0.2.0-py3-none-any.whl`.
+from this chat: `python -m pip install path/to/integral_compass-0.3.0-py3-none-any.whl`.
 The offline Windows test kit includes that wheel and its dependencies.
 
 ## Return values
@@ -60,10 +61,12 @@ assert report.verified
 | --- | --- | --- |
 | `elementary` | SymPy expression, without `C` | A solution passed derivative verification |
 | `exhausted` | `None` | Every generated branch within the specified depth failed |
+| `non_elementary` | `None` | With no depth limit, Risch proved no elementary primitive exists |
 | `unknown` | the string `"unknown"` | A branch could not be evaluated, a cycle was unresolved, the worker failed, or time ran out |
 
-**In 0.2 search mode, `None` is not proof that an elementary primitive does not exist.**
+**In bounded search, `None` is not proof that an elementary primitive does not exist.**
 For example, the same `x**2*exp(x)` returns `None` at depth 2 and succeeds at depth 3.
+Use `analyze(...).status` to distinguish `exhausted` from `non_elementary`.
 A success prints only the steps actually used; a basic-table-only solution does not
 invent a partial-fractions derivation. `analyze()` is silent and returns structured data.
 
@@ -82,7 +85,9 @@ Sums are handled by linearity without spending a parts level.
 Products with more than two canonical factors try all nonempty factor bipartitions,
 in both orientations, up to eight factors. “All branches” means this finite grammar,
 not every mathematically possible rewriting or substitution. Risch/general SymPy
-integration cannot bypass the requested depth in search mode. See the mathematics guide.
+integration cannot bypass a requested finite depth. With no depth limit, Risch gets
+30% of the total time, followed by classroom search with the remaining time. A verified
+Risch answer is retained as a fallback if the step search fails. See the mathematics guide.
 
 ## CLI and minimal examples
 
@@ -93,10 +98,21 @@ integral-compass 'log(x)/(x+1)**2' --depth 2
 python examples/minimal_case.py
 ```
 
-CLI exit status: 0 decided (elementary/exhausted), 2 invalid input, 3 unknown.
+CLI exit status: 0 decided (elementary/exhausted/non_elementary), 2 invalid input, 3 unknown.
 Quote expressions; write multiplication as `*` and powers as `**`.
 
-## The 0.1 contract is still available
+## Cycle equations and the classic API
+
+For `exp(x)*sin(x)`, repeated parts gives `J = exp(x)*(sin(x)-cos(x)) - J`.
+The solver carries signs and multipliers through the full path, solves for J,
+and verifies the derivative. For example:
+
+```python
+IntegralSolver("exp(x)*sin(x)", 3).solve()
+assert integrate("exp(-x**2)") is None  # automatic Risch, no depth specified
+```
+
+The 0.1 compatibility contract remains separately available:
 
 ```python
 from integral_compass.classic import integrate as classic_integrate
@@ -112,7 +128,9 @@ now keyword-only in the new API: `integrate(expr, 3, variable=t)`.
 Single-variable symbolic expressions only; no arbitrary callables or free parameters.
 Strings use a real variable. Inputs use a restricted AST parser, not `eval`.
 The classroom rational path caps polynomial degree at 30. Unsupported absolute-value,
-piecewise, algebraic-root representation and cyclic-equation cases remain unknown.
+piecewise and algebraic-root representation cases may remain unknown. Reappearance of
+the original integrand, including constant multiples, now triggers cycle-equation solving.
+Degenerate identities such as J=J are never accepted as solutions.
 A computation deadline does not establish mathematical non-integrability.
 
 Answers are local identities away from singularities and branch boundaries; the

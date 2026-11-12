@@ -1,26 +1,31 @@
-# API reference — 0.2
+# API reference — 0.3
 
-## `integrate(expression, depth=None, *, variable="x", timeout=10.0, show_steps=True)`
+## `integrate(expression, depth=None, *, variable="x", timeout=None, show_steps=True)`
 
-Return a SymPy primitive, `None` for a completely exhausted bounded search, or the
+Return a SymPy primitive, `None` for an exhausted bounded search or Risch-proven
+non-elementarity in automatic mode, or the
 literal string `"unknown"` for an unresolved search. Successful calls automatically
 print the solution path. Set `show_steps=False` for silent operation. The arbitrary
 constant C is omitted from the expression and included in the printed explanation.
 
 `depth` must be a positive Python int or None. The original problem is level 1,
 so depth 3 permits at most two integration-by-parts decisions along a path.
-None applies no depth cap; a finite positive `timeout` still bounds worker time.
+None applies no depth cap and enables automatic Risch+search. `timeout=None` means
+a shared 10-second budget; an explicit positive timeout changes that budget. Risch
+uses at most 30%, then search gets the remaining time. A Risch proof can end the
+computation immediately; a verified Risch primitive is retained as a fallback.
+With a finite depth, Risch does not bypass the bound and timeout defaults to 10 seconds.
 
 `variable` is keyword-only, a name (real by default) or a SymPy Symbol. When passing
 an existing symbolic expression, pass its own Symbol to preserve assumptions.
 
-## `analyze(expression, depth=None, *, variable="x", timeout=10.0)`
+## `analyze(expression, depth=None, *, variable="x", timeout=None)`
 
 Same computation, without printing; returns `IntegrationResult`:
 
 | Field | Meaning |
 | --- | --- |
-| `status` | `elementary`, `exhausted`, `unknown` in search mode |
+| `status` | `elementary`, `exhausted`, `non_elementary`, or `unknown` |
 | `integrand`, `variable` | Normalized SymPy input |
 | `antiderivative` | Expression for success, otherwise None; inspect status to distinguish failures |
 | `method`, `verified`, `reason` | Solver route, derivative check and interpretation |
@@ -35,7 +40,7 @@ Same computation, without printing; returns `IntegrationResult`:
 The tree describes the final search pass, including attempted side primitives.
 A successful path may stop before exploring siblings; it does not need every branch.
 
-## `IntegralSolver(expression, depth=None, *, variable="x", timeout=10.0)`
+## `IntegralSolver(expression, depth=None, *, variable="x", timeout=None)`
 
 - `.analyze()` computes and caches the structured result, without printing.
 - `.solve(show_steps=True)` returns expression/None/"unknown" and prints successful steps.
@@ -64,3 +69,11 @@ No explicit RAM quota is enforced; this is a local educational tool, not a harde
 NonElementaryIntegral remainder certifies non-elementarity, unknown raises
 IntegrationUndeterminedError. This API does not accept a depth and does not
 provide the new search contract. CLI: `--classic`, incompatible with `--depth`.
+
+## Cycle equations
+
+Before terminal/depth checks, compare the remainder to the current subproblem's
+original integrand. For a constant multiple k, carry the existing path as
+J=A+B*integral(current), then solve (1-B*k)*J=A. The solution must pass derivative
+verification. A zero denominator is a degenerate route, never a primitive.
+Linearity assigns each summand its own original integral and equation.

@@ -85,7 +85,8 @@ class _Search:
             yield u, dv
             yield dv, u
 
-    def visit(self, f, depth=1, parent=None, ancestors=frozenset(), decision=None):
+    def visit(self, f, depth=1, parent=None, ancestors=frozenset(), decision=None,
+              origin=None, context=None):
         node = {"id": len(self.tree), "parent": parent, "depth": depth,
                 "integrand": str(f), "status": "searching"}
         if decision:
@@ -96,6 +97,32 @@ class _Search:
             node["status"] = outcome.status
             return outcome
 
+        if origin is None:
+            origin, context = f, (sp.S.Zero, sp.S.One)
+        elif origin != 0:
+            ratio = sp.simplify(sp.trigsimp(sp.cancel(f / origin)))
+            if ratio != 0 and not ratio.has(self.x) and ratio.is_finite is True:
+                # Carry the entire path as J = A + B*integral(current).
+                # If current = k*origin, solve (1-B*k)*J = A.
+                a, b = context
+                multiplier = sp.simplify(b * ratio)
+                denominator = sp.simplify(1 - multiplier)
+                node["cycle_ratio"] = str(ratio)
+                node["equation"] = f"J = ({a}) + ({multiplier})*J"
+                if denominator == 0:
+                    node["reason"] = "Degenerate cycle: no independent equation for J."
+                    return finish(_Outcome("unknown" if self.unlimited else "exhausted"))
+                if denominator.is_zero is False:
+                    root_primitive = sp.factor_terms(a / denominator)
+                    if _verified(root_primitive, origin, self.x):
+                        return finish(_Outcome("elementary", ratio * root_primitive, (
+                            Step("Cycle detected", "The remaining integrand is a constant "
+                                 "multiple of this subproblem's original integrand.", str(f)),
+                            Step("Solve cycle equation", node["equation"] +
+                                 f"; divide by {denominator}.", str(root_primitive)),)))
+                node["reason"] = "Cycle equation could not be solved and verified."
+                return finish(_Outcome("unknown"))
+
         direct = self.direct(f)
         if direct is not None:
             return finish(direct)
@@ -104,11 +131,12 @@ class _Search:
             return finish(_Outcome("unknown"))
         coefficient, body = f.as_independent(self.x, as_Add=False)
         if self.unlimited and body in ancestors:
-            node["reason"] = "Cycle detected; cyclic integral equations are unsupported."
+            node["reason"] = "An ancestor cycle outside the current origin remains unresolved."
             return finish(_Outcome("unknown"))
         ancestors = ancestors | {body}
         if f.is_Add:
-            parts = [self.visit(term, depth, node["id"], ancestors)
+            # Each summand is a separate integration problem with its own J.
+            parts = [self.visit(term, depth, node["id"])
                      for term in sp.Add.make_args(f)]
             if all(part.status == "elementary" for part in parts):
                 return finish(_Outcome("elementary", sum(p.primitive for p in parts), (
@@ -141,7 +169,10 @@ class _Search:
             du = sp.diff(u, self.x)
             remainder = sp.factor_terms(du * v)
             child = self.visit(remainder, depth + 1, node["id"], ancestors,
-                               {"u": str(u), "dv": str(dv), "v": str(v)})
+                               {"u": str(u), "dv": str(dv), "v": str(v)},
+                               origin=origin,
+                               context=(context[0] + context[1]*coefficient*u*v,
+                                        -context[1]*coefficient))
             if child.status == "elementary":
                 primitive = sp.factor_terms(coefficient * (u * v - child.primitive))
                 step = Step("DI / integration by parts", f"At depth {depth}: choose D={u}, "

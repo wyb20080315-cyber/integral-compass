@@ -1,5 +1,15 @@
 # Validation records
 
+## 0.3 cyclic equations and automatic Risch
+
+The cycle/default-mode changes passed 89 local tests on Python 3.12 with SymPy 1.14.0.
+After simplifying timeout-mode selection, the 39 search/auto tests were rerun and passed;
+the original 50 classic tests remain unchanged. Seven minimal cases passed.
+New coverage includes signed/scaled recurrences, depth-boundary closure, rejection of
+degenerate identities, independent summand equations, Risch certificates versus unknown,
+Risch fallback and preservation of automatic mode with an explicit timeout.
+The refreshed 0.3 distributions and offline test kit are validated separately.
+
 ## 0.2 depth-controlled search
 
 Locally validated on Python 3.12 with SymPy 1.14.0: 74 tests passed, Ruff passed,
@@ -14,7 +24,8 @@ actual partial-fraction leaves, unbounded search, cycles, unknown propagation,
 timeouts, class output/caching, custom symbols, linearity and CLI behavior.
 The 50 original tests continue to verify the separate classic contract.
 
-The CI record below applies to 0.1. Remote 0.2 checks are recorded separately once run.
+The CI record below applies to 0.1. The 0.2 PR subsequently passed all five test jobs
+and its build job in run 43161174564; its expanded suite had 74 tests.
 
 ## 0.1 local checks
 

@@ -27,9 +27,21 @@ def main():
     assert integrate("Abs(x)", 3) == "unknown"
     print("PASS\n")
 
-    print("CASE 5: omit depth -> no configured depth cap")
+    print("CASE 5: omit depth -> automatic Risch + unbounded-depth classroom search")
     assert analyze("x**2*exp(x)").verified
-    print("PASS\nAll five minimal cases passed.")
+    print("PASS\n")
+
+    print("CASE 6: cyclic integration by parts -> solve the equation for J")
+    problem = IntegralSolver("exp(x)*sin(x)", 3)
+    problem.solve()
+    assert problem.result.verified
+    assert any(step.title == "Solve cycle equation" for step in problem.result.steps)
+    print("PASS\n")
+
+    print("CASE 7: no depth specified -> Risch-proven non-elementarity")
+    assert analyze("exp(-x**2)").status == "non_elementary"
+    assert integrate("exp(-x**2)") is None
+    print("PASS\nAll seven minimal cases passed.")
 
 
 if __name__ == "__main__":

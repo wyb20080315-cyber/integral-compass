@@ -65,9 +65,10 @@ def test_rational_leaf_succeeds_even_at_depth_one():
 def test_unresolved_branch_propagates_unknown_instead_of_none():
     assert analyze("Abs(x)", 3).status == "unknown"
     assert integrate("Abs(x)", 3) == "unknown"
-    # Both choices need a primitive outside the terminal rules, or leave a cycle.
+    # A solvable cycle is now resolved instead of being reported as unknown.
     result = analyze("sin(x)*cos(x)")
-    assert result.status == "unknown"
+    assert result.status == "elementary"
+    assert result.verified
     assert not result.search_complete
 
 

@@ -39,10 +39,20 @@ algorithmic search outcome, not mathematical non-elementarity. For instance,
 
 Unknown branches do not prevent trying siblings. A success wins; otherwise an
 unresolved branch makes the result unknown. Timeouts and worker failures are unknown.
+Before a terminal/depth check, compare the remainder to the original integrand of
+that integration subproblem, allowing a constant ratio k. Along the path preserve
+J=A+B*integral(current). A recurrence current=k*original gives (1-B*k)*J=A.
+A nonzero denominator gives a candidate primitive, which must be derivative-verified.
+A degenerate equation such as J=J provides no independent information: try other
+routes; it is a failed bounded route and unresolved in an unbounded search.
+Each linearity subproblem has its own J. Other unresolved ancestor cycles remain unknown.
+
 With no depth cap, iterative deepening fairly explores increasing finite depths.
-Repeated states in an ancestor chain are marked unknown in unlimited mode; solving
-cyclic integral equations is not implemented. Bounded search explores them up to its
-boundary instead. A finite time budget still applies.
+Automatic mode first spends at most 30% of the total budget on the Risch-only backend.
+A certified non-elementary remainder returns None/non_elementary. Otherwise the
+remaining budget goes to classroom search, with a verified Risch answer retained
+as fallback. A finite depth disables that precheck so it cannot bypass the bound.
+The default total budget is 10 seconds; explicit timeout changes it in both modes.
 
 ## Derivative verification and domains
 
