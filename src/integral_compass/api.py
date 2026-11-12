@@ -6,7 +6,6 @@ import subprocess
 import sys
 import time
 from dataclasses import replace
-from typing import Literal
 
 import sympy as sp
 
@@ -27,7 +26,7 @@ def _analyze(expression, variable, *, timeout, depth=None, mode="search"):
 
     def unknown(method, reason):
         return IntegrationResult("unknown", f, x, method=method, reason=reason,
-                                 search_depth=depth)
+                                 search_depth=depth, reason_code=method)
 
     try:
         process = subprocess.run(
@@ -52,6 +51,7 @@ def _analyze(expression, variable, *, timeout, depth=None, mode="search"):
             search_depth=data["search_depth"], depth_reached=data["depth_reached"],
             nodes_visited=data["nodes_visited"], search_complete=data["search_complete"],
             search_tree=tuple(data["search_tree"]),
+            reason_code=data.get("reason_code", ""),
         )
     except (KeyError, TypeError, ValueError):
         return unknown("backend_error", "The worker returned an unsupported result.")
@@ -78,7 +78,8 @@ def analyze(expression: str | sp.Expr, depth: int | None = None, *,
     remaining = budget - (time.monotonic() - started)
     search = (_analyze(expression, variable, timeout=remaining) if remaining > 0 else
               replace(precheck, status="unknown", antiderivative=None, method="timeout",
-                      verified=False, reason="The total time budget was exhausted before step search."))
+                      verified=False, reason="The total time budget was exhausted before step search.",
+                      reason_code="timeout"))
     if search.status == "elementary":
         note = Step("Automatic Risch precheck", "Risch precheck: " + precheck.status +
                     ". The derivation below was found by the classroom search.")
@@ -95,12 +96,12 @@ def analyze(expression: str | sp.Expr, depth: int | None = None, *,
 
 def integrate(expression: str | sp.Expr, depth: int | None = None, *,
               variable: str | sp.Symbol = "x", timeout: float | None = None,
-              show_steps: bool = True) -> sp.Expr | Literal["unknown"] | None:
-    """Return a primitive, 'unknown', or None; inspect analyze().status for why None.
+              show_steps: bool = True) -> sp.Expr | str | None:
+    """Return a primitive, None for exhausted search, or an explanatory string.
 
     A successful call prints its actual solution path unless show_steps=False.
-    None means exhausted for a bounded search, or Risch-proven non-elementarity
-    in automatic mode. Unknown means no decision, never a proof of impossibility.
+    A Risch certificate returns 'None, verified by Risch'. Unknown messages include
+    the reason. A successful call still returns the actual primitive expression.
     """
     return IntegralSolver(expression, depth, variable=variable, timeout=timeout).solve(
         show_steps=show_steps)
@@ -126,15 +127,11 @@ class IntegralSolver:
             self._settings = settings
         return self.result
 
-    def solve(self, *, show_steps: bool = True) -> sp.Expr | Literal["unknown"] | None:
+    def solve(self, *, show_steps: bool = True) -> sp.Expr | str | None:
         result = self.analyze()
-        if result.status == "elementary":
-            if show_steps:
-                self.show()
-            return result.antiderivative
-        if result.status in ("exhausted", "non_elementary"):
-            return None
-        return "unknown"
+        if result.status == "elementary" and show_steps:
+            self.show()
+        return result.value
 
     def show(self) -> None:
         print(self.analyze().explain())

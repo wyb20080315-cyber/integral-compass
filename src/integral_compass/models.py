@@ -32,6 +32,22 @@ class IntegrationResult:
     nodes_visited: int = 0
     search_complete: bool = False
     search_tree: tuple[dict, ...] = ()
+    reason_code: str = ""
+
+    @property
+    def value(self) -> sp.Expr | str | None:
+        """The simple public value, including a reason for every unknown result."""
+        if self.status == "elementary":
+            return self.antiderivative
+        if self.status == "non_elementary":
+            return "None, verified by Risch"
+        if self.status == "exhausted":
+            return None
+        code = self.reason_code or (self.method if self.method in ("timeout", "backend_error")
+                                    else "unresolved_branch")
+        labels = {"unsupported_rule": "unsupported rule", "unresolved_branch": "unresolved branches",
+                  "backend_error": "backend error", "verification_failed": "verification failed"}
+        return f"unknown, {labels.get(code, code)}: {self.reason}"
 
     def to_dict(self) -> dict:
         return {
@@ -43,6 +59,8 @@ class IntegrationResult:
             "method": self.method,
             "verified": self.verified,
             "reason": self.reason,
+            "reason_code": self.reason_code,
+            "value": str(self.value) if isinstance(self.value, sp.Expr) else self.value,
             "search_depth": self.search_depth,
             "depth_reached": self.depth_reached,
             "nodes_visited": self.nodes_visited,
@@ -67,6 +85,8 @@ class IntegrationResult:
                 lines.append("   " + " | ".join(f"{key}={value}" for key, value in row.items()))
         if self.antiderivative is not None:
             lines.append(f"F({self.variable}) = {self.antiderivative} + C")
+        else:
+            lines.append(f"Return value: {self.value!r}")
         lines.append(f"Verified: {self.verified}")
         lines.append(self.reason)
         return "\n".join(lines)

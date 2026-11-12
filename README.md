@@ -2,7 +2,7 @@
 
 **Explore both integration-by-parts directions. Follow the successful path.**
 
-Version 0.3 adds cyclic-equation solving and automatic Risch decisions. The original integral is
+Version 0.4 adds explanatory failure messages and minimal presentation examples. The original integral is
 level **1**; each integration-by-parts decision advances one level. The second
 argument is `depth=None`, meaning no depth cap. Without a depth limit, automatic
 mode combines Risch and classroom search under a shared 10-second budget.
@@ -35,7 +35,7 @@ python -m pip install .
 ```
 
 If testing a development branch, check out that branch first. For a wheel downloaded
-from this chat: `python -m pip install path/to/integral_compass-0.3.0-py3-none-any.whl`.
+from this chat: `python -m pip install path/to/integral_compass-0.4.0-py3-none-any.whl`.
 The offline Windows test kit includes that wheel and its dependencies.
 
 ## Return values
@@ -45,7 +45,7 @@ from integral_compass import integrate, analyze, IntegralSolver
 
 assert integrate("x**2 * exp(x)", 2) is None
 F = integrate("x**2 * exp(x)", 3)  # prints the successful steps automatically
-assert integrate("Abs(x)", 3) == "unknown"
+assert integrate("Abs(x)", 3).startswith("unknown, unsupported rule:")
 
 # Omit depth: fair iterative-deepening search, with no configured depth cap.
 F = integrate("x**2 * exp(x)", show_steps=False)
@@ -61,12 +61,13 @@ assert report.verified
 | --- | --- | --- |
 | `elementary` | SymPy expression, without `C` | A solution passed derivative verification |
 | `exhausted` | `None` | Every generated branch within the specified depth failed |
-| `non_elementary` | `None` | With no depth limit, Risch proved no elementary primitive exists |
-| `unknown` | the string `"unknown"` | A branch could not be evaluated, a cycle was unresolved, the worker failed, or time ran out |
+| `non_elementary` | `"None, verified by Risch"` | With no depth limit, Risch proved no elementary primitive exists |
+| `unknown` | `"unknown, REASON: explanation"` | Unsupported rule, unresolved branches, timeout, backend error or failed verification |
 
 **In bounded search, `None` is not proof that an elementary primitive does not exist.**
 For example, the same `x**2*exp(x)` returns `None` at depth 2 and succeeds at depth 3.
-Use `analyze(...).status` to distinguish `exhausted` from `non_elementary`.
+The Risch message is a string, not Python None. `analyze(...).reason_code` gives a
+stable failure category; `.value` matches the simple API, and JSON includes both.
 A success prints only the steps actually used; a basic-table-only solution does not
 invent a partial-fractions derivation. `analyze()` is silent and returns structured data.
 
@@ -96,6 +97,8 @@ integral-compass 'x**2*exp(x)' --depth 2
 integral-compass 'x**2*exp(x)' --depth 3 --json
 integral-compass 'log(x)/(x+1)**2' --depth 2
 python examples/minimal_case.py
+python examples/presentation_demo.py
+python examples/failure_cases.py
 ```
 
 CLI exit status: 0 decided (elementary/exhausted/non_elementary), 2 invalid input, 3 unknown.
@@ -109,7 +112,7 @@ and verifies the derivative. For example:
 
 ```python
 IntegralSolver("exp(x)*sin(x)", 3).solve()
-assert integrate("exp(-x**2)") is None  # automatic Risch, no depth specified
+assert integrate("exp(-x**2)") == "None, verified by Risch"
 ```
 
 The 0.1 compatibility contract remains separately available:
@@ -152,3 +155,20 @@ python -m twine check dist/*
 The package and documentation were developed with OpenAI Codex assistance; contributors
 should review and understand submitted code. Algorithms are standard mathematics;
 [SymPy](https://www.sympy.org/) is the symbolic backend. MIT licensed.
+
+## Minimal failure examples
+
+| Category | Call | Outcome |
+| --- | --- | --- |
+| Depth exhausted | `integrate("x*exp(x)", 1)` | Python None |
+| Risch proof | `integrate("exp(-x**2)")` | `"None, verified by Risch"` |
+| Timeout | `integrate("x", 1, timeout=0.000001)` | unknown, timeout + explanation |
+| Unsupported root rule | `integrate("Abs(x)", 1)` | unknown, unsupported rule + explanation |
+| Unresolved branches | `integrate("log(x)**2", 2)` | unknown, unresolved branches + explanation |
+
+The last example succeeds at depth 3. An unresolved direction may itself be blocked
+by a missing side-primitive rule; these explanations describe different places in
+the computation, not wholly unrelated mathematical categories. See the
+[one-minute presentation and backup cases](docs/presentation.zh-CN.md).
+Input errors remain exceptions. Software faults/verification failures have clearly
+labeled simulations in `python examples/failure_cases.py --internal`.

@@ -1,10 +1,10 @@
-# API reference — 0.3
+# API reference — 0.4
 
 ## `integrate(expression, depth=None, *, variable="x", timeout=None, show_steps=True)`
 
-Return a SymPy primitive, `None` for an exhausted bounded search or Risch-proven
-non-elementarity in automatic mode, or the
-literal string `"unknown"` for an unresolved search. Successful calls automatically
+Return a SymPy primitive, Python `None` for an exhausted bounded search, the string
+`"None, verified by Risch"` for certified non-elementarity in automatic mode, or
+`"unknown, REASON: explanation"` for an unresolved computation. Successful calls automatically
 print the solution path. Set `show_steps=False` for silent operation. The arbitrary
 constant C is omitted from the expression and included in the printed explanation.
 
@@ -29,6 +29,8 @@ Same computation, without printing; returns `IntegrationResult`:
 | `integrand`, `variable` | Normalized SymPy input |
 | `antiderivative` | Expression for success, otherwise None; inspect status to distinguish failures |
 | `method`, `verified`, `reason` | Solver route, derivative check and interpretation |
+| `reason_code` | Stable unknown category: timeout, unsupported_rule, unresolved_branch, backend_error, verification_failed |
+| `value` | Public expression/None/explanatory string; JSON serializes expressions as strings |
 | `steps` | Successful derivation as `Step(title, explanation, expression, rows)` |
 | `search_depth` | Requested maximum, or None |
 | `depth_reached` | Greatest level in the reported pass |
@@ -43,7 +45,7 @@ A successful path may stop before exploring siblings; it does not need every bra
 ## `IntegralSolver(expression, depth=None, *, variable="x", timeout=None)`
 
 - `.analyze()` computes and caches the structured result, without printing.
-- `.solve(show_steps=True)` returns expression/None/"unknown" and prints successful steps.
+- `.solve(show_steps=True)` returns an expression/None/an explanatory string and prints successful steps.
 - `.show()` displays the cached/current result, including failure explanations.
 - `.show_tree()` prints the explored final-pass tree.
 - `.result` is None until the first computation, then the structured result.
@@ -77,3 +79,14 @@ original integrand. For a constant multiple k, carry the existing path as
 J=A+B*integral(current), then solve (1-B*k)*J=A. The solution must pass derivative
 verification. A zero denominator is a degenerate route, never a primitive.
 Linearity assigns each summand its own original integral and equation.
+
+## Failure-message contract
+
+Unknown strings start with `unknown, ` and include their cause. Prefer the stable
+structured `reason_code` over parsing prose. Prefixes are `unknown, timeout:`,
+`unknown, unsupported rule:`, `unknown, unresolved branches:`,
+`unknown, backend error:`, and `unknown, verification failed:`.
+Only a real Risch non-elementarity certificate produces the exact string
+`None, verified by Risch`; not every default-mode call returns this string.
+Successful default-mode calls still return primitive expressions.
+The classic compatibility API retains Python None and exceptions as before.

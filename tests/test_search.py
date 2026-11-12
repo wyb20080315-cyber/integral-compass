@@ -64,7 +64,7 @@ def test_rational_leaf_succeeds_even_at_depth_one():
 
 def test_unresolved_branch_propagates_unknown_instead_of_none():
     assert analyze("Abs(x)", 3).status == "unknown"
-    assert integrate("Abs(x)", 3) == "unknown"
+    assert integrate("Abs(x)", 3).startswith("unknown, unsupported rule:")
     # A solvable cycle is now resolved instead of being reported as unknown.
     result = analyze("sin(x)*cos(x)")
     assert result.status == "elementary"
@@ -76,7 +76,7 @@ def test_timeout_is_unknown_even_when_the_problem_is_solvable():
     result = analyze("x*exp(x)", 3, timeout=0.000001)
     assert result.status == "unknown"
     assert result.method == "timeout"
-    assert integrate("x*exp(x)", 3, timeout=0.000001) == "unknown"
+    assert integrate("x*exp(x)", 3, timeout=0.000001).startswith("unknown, timeout:")
 
 
 @pytest.mark.parametrize("depth", [0, -1, True, False, 2.5, "3", sp.Integer(3)])

@@ -19,6 +19,7 @@ class _Outcome:
     status: str
     primitive: sp.Expr | None = None
     steps: tuple[Step, ...] = ()
+    reason_code: str = ""
 
 
 class _Search:
@@ -95,6 +96,8 @@ class _Search:
 
         def finish(outcome):
             node["status"] = outcome.status
+            if outcome.reason_code:
+                node["reason_code"] = outcome.reason_code
             return outcome
 
         if origin is None:
@@ -111,7 +114,8 @@ class _Search:
                 node["equation"] = f"J = ({a}) + ({multiplier})*J"
                 if denominator == 0:
                     node["reason"] = "Degenerate cycle: no independent equation for J."
-                    return finish(_Outcome("unknown" if self.unlimited else "exhausted"))
+                    return finish(_Outcome("unknown" if self.unlimited else "exhausted",
+                                           reason_code="unresolved_branch" if self.unlimited else ""))
                 if denominator.is_zero is False:
                     root_primitive = sp.factor_terms(a / denominator)
                     if _verified(root_primitive, origin, self.x):
@@ -121,18 +125,18 @@ class _Search:
                             Step("Solve cycle equation", node["equation"] +
                                  f"; divide by {denominator}.", str(root_primitive)),)))
                 node["reason"] = "Cycle equation could not be solved and verified."
-                return finish(_Outcome("unknown"))
+                return finish(_Outcome("unknown", reason_code="verification_failed"))
 
         direct = self.direct(f)
         if direct is not None:
             return finish(direct)
         if f.has(sp.Abs):
             node["reason"] = "Piecewise/absolute-value search rules are not implemented."
-            return finish(_Outcome("unknown"))
+            return finish(_Outcome("unknown", reason_code="unsupported_rule"))
         coefficient, body = f.as_independent(self.x, as_Add=False)
         if self.unlimited and body in ancestors:
             node["reason"] = "An ancestor cycle outside the current origin remains unresolved."
-            return finish(_Outcome("unknown"))
+            return finish(_Outcome("unknown", reason_code="unresolved_branch"))
         ancestors = ancestors | {body}
         if f.is_Add:
             # Each summand is a separate integration problem with its own J.
@@ -143,18 +147,19 @@ class _Search:
                     Step("Linearity", "Integrate each summand; linearity does not consume "
                          "an integration-by-parts level."),
                     *(step for part in parts for step in part.steps))))
-            return finish(_Outcome("unknown" if any(p.status == "unknown" for p in parts)
-                                   else "exhausted"))
+            uncertain = any(p.status == "unknown" for p in parts)
+            return finish(_Outcome("unknown" if uncertain else "exhausted",
+                                   reason_code="unresolved_branch" if uncertain else ""))
         if f.is_rational_function(self.x):
             node["reason"] = "Rational terminal exceeded the supported degree or output representation."
-            return finish(_Outcome("unknown"))
+            return finish(_Outcome("unknown", reason_code="unsupported_rule"))
         if depth >= self.limit:
             self.frontier += 1
             node["reason"] = "Depth boundary reached without a terminal rule."
             return finish(_Outcome("exhausted"))
         if len(sp.Mul.make_args(body)) > 8:
             node["reason"] = "More than 8 product factors; partition search is unsupported."
-            return finish(_Outcome("unknown"))
+            return finish(_Outcome("unknown", reason_code="unsupported_rule"))
         uncertain = False
         for u, dv in self.splits(body):
             side = self.direct(dv)
@@ -162,7 +167,9 @@ class _Search:
                 self.tree.append({"id": len(self.tree), "parent": node["id"],
                                   "depth": depth + 1, "integrand": str(dv),
                                   "status": "unknown", "u": str(u), "dv": str(dv),
-                                  "reason": "The side primitive v is unavailable in the basic rules."})
+                                  "reason_code": "unresolved_branch",
+                                  "reason": f"No basic primitive v for the I side {dv}; "
+                                            f"this direction with D={u} was not evaluated."})
                 uncertain = True
                 continue
             v = side.primitive
@@ -188,7 +195,8 @@ class _Search:
                     Step("Recombine", f"Return from depth {depth + 1} to depth {depth}.",
                          str(primitive)))))
             uncertain |= child.status == "unknown"
-        return finish(_Outcome("unknown" if uncertain else "exhausted"))
+        return finish(_Outcome("unknown" if uncertain else "exhausted",
+                               reason_code="unresolved_branch" if uncertain else ""))
 
 
 def search_core(f, x, depth):
@@ -216,16 +224,25 @@ def search_core(f, x, depth):
                     "Verified locally away from singularities and branch boundaries; add C.",
                     outcome.steps + (Step("Derivative check", "Simplify F'(x) - f(x).", "0"),),
                     depth, reached, total, False, tuple(search.tree))
-            outcome = _Outcome("unknown")
+            outcome = _Outcome("unknown", reason_code="verification_failed")
             invalid_answer = True
         if depth is not None or search.frontier == 0 or invalid_answer:
             exhausted = outcome.status == "exhausted"
+            if exhausted:
+                reason = ("Every generated branch within the requested depth was exhausted. "
+                          "This is a search limit, not proof of a non-elementary integral.")
+            elif invalid_answer:
+                reason = "The candidate failed derivative verification or output validation."
+            elif outcome.reason_code == "unsupported_rule":
+                reason = search.tree[0].get("reason", "No supported rule for this expression.")
+            else:
+                blockers = [node["reason"] for node in search.tree
+                            if node["status"] == "unknown" and node.get("reason")]
+                reason = "At least one branch could not be evaluated. " + " ".join(blockers[:2])
             return IntegrationResult(
                 outcome.status, f, x, method="parts_search",
-                reason=("Every generated branch within the requested depth was exhausted. "
-                        "This is a search limit, not proof of a non-elementary integral."
-                        if exhausted else "At least one branch could not be evaluated with the "
-                        "available rules; the search is unknown."),
+                reason=reason,
                 search_depth=depth, depth_reached=reached, nodes_visited=total,
-                search_complete=exhausted, search_tree=tuple(search.tree))
+                search_complete=exhausted, search_tree=tuple(search.tree),
+                reason_code=outcome.reason_code)
     raise AssertionError("unreachable")

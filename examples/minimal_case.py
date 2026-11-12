@@ -23,8 +23,8 @@ def main():
     assert problem.result.verified
     print("PASS\n")
 
-    print("CASE 4: unsupported rule -> literal string 'unknown'")
-    assert integrate("Abs(x)", 3) == "unknown"
+    print("CASE 4: unsupported rule -> an unknown message with its explanation")
+    assert integrate("Abs(x)", 3).startswith("unknown, unsupported rule:")
     print("PASS\n")
 
     print("CASE 5: omit depth -> automatic Risch + unbounded-depth classroom search")
@@ -40,7 +40,7 @@ def main():
 
     print("CASE 7: no depth specified -> Risch-proven non-elementarity")
     assert analyze("exp(-x**2)").status == "non_elementary"
-    assert integrate("exp(-x**2)") is None
+    assert integrate("exp(-x**2)") == "None, verified by Risch"
     print("PASS\nAll seven minimal cases passed.")
 
 

@@ -1,5 +1,15 @@
 # Validation records
 
+## 0.4 explanatory outcomes and presentation cases
+
+Python 3.12 / SymPy 1.14.0: all 96 local tests passed, including the unchanged
+classic contract. Ruff and the real failure-case/presentation scripts passed.
+The diagnostics explicitly distinguish Python None from the Risch-certificate
+string, root unsupported rules from unresolved directions, timeouts, injected
+worker failures and forced verification failure. Simulated faults are labeled
+and do not claim to be normal mathematical inputs.
+The refreshed distributions/offline kit and cross-platform CI are checked separately.
+
 ## 0.3 cyclic equations and automatic Risch
 
 The cycle/default-mode changes passed 89 local tests on Python 3.12 with SymPy 1.14.0.

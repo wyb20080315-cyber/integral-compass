@@ -12,7 +12,8 @@ def risch_decision(f, x):
         primitive, remainder = risch_integrate(f, x, separate_integral=True)
     except (NotImplementedError, ValueError, TypeError, KeyError):
         return IntegrationResult("unknown", f, x, method="risch_unsupported",
-                                 reason="The Risch backend did not decide this expression.")
+                                 reason="The Risch backend did not decide this expression.",
+                                 reason_code="unsupported_rule")
     if isinstance(remainder, NonElementaryIntegral):
         return IntegrationResult(
             "non_elementary", f, x, method="risch",
@@ -28,4 +29,5 @@ def risch_decision(f, x):
                 (Step("Risch primitive", "Use the supported exponential/logarithmic algorithm.",
                       str(primitive)), Step("Derivative check", "Simplify F'(x)-f(x).", "0")))
     return IntegrationResult("unknown", f, x, method="risch_unsupported",
-                             reason="The Risch backend returned no verified decision.")
+                             reason="The Risch backend returned no verified decision.",
+                             reason_code="unsupported_rule")

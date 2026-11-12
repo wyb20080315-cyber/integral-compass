@@ -20,7 +20,7 @@ SHA256：`5da012101ba2e17113a9a1cd901e9ce1441086f2b7ecb5de06ec94163899a190`。
 
 ## 2. 最省事：离线测试包
 
-下载本次聊天提供的 `integral-compass-windows-test-kit-0.3.0.zip`，完整解压，
+下载本次聊天提供的 `integral-compass-windows-test-kit-0.4.0.zip`，完整解压，
 例如放在 `C:\code\integral-compass-test`。不要直接在压缩文件窗口里运行。
 
 测试包里有：
@@ -32,6 +32,7 @@ SHA256：`5da012101ba2e17113a9a1cd901e9ce1441086f2b7ecb5de06ec94163899a190`。
 
 双击 `setup_windows.cmd`。看到 **All seven minimal cases passed** 就说明包已导入并能运行。
 之后编辑 `minimal_case.py`，保存，再双击 `run_example.cmd`。
+演讲用 `run_demo.cmd`；失败案例用 `run_failures.cmd`。
 这些脚本是测试包内使用的，不是在源码仓库的 scripts 目录直接双击运行。
 
 ## 3. 也可以自己敲命令
@@ -40,7 +41,7 @@ SHA256：`5da012101ba2e17113a9a1cd901e9ce1441086f2b7ecb5de06ec94163899a190`。
 
 ```powershell
 py -3.13 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --no-index --find-links .\wheels integral-compass==0.3.0
+.\.venv\Scripts\python.exe -m pip install --no-index --find-links .\wheels integral-compass==0.4.0
 .\.venv\Scripts\python.exe .\minimal_case.py
 ```
 
@@ -88,8 +89,9 @@ print("answer:", answer)
 - `py` 找不到：确认安装 Python Launcher，关闭终端后重新打开。
 - `ModuleNotFoundError`：检查运行和安装是否使用同一个 `.venv` 解释器。
 - 导入到了自己的文件：避免使用包名给脚本命名，重命名后删除旁边的 `__pycache__`。
-- 得到 None：若填了深度，它表示限深搜索耗尽；若没填深度，用 analyze 看是否为 Risch 证明的 non_elementary。
-- 得到 unknown：用 `analyze(...).reason` 看原因，超时可以增加 timeout。
+- 得到 Python None：表示限深搜索耗尽。
+- 得到字符串 None, verified by Risch：表示 Risch 证明无初等原函数。
+- 得到 unknown：字符串后面会直接说明原因；也可查看 reason_code，超时可增大 timeout。
 - 想在编辑器里运行：选择测试包的 `.venv\Scripts\python.exe` 作为解释器。
 
 Windows 安装程序由 Python 官方提供；本项目不重新签署或修改它。离线包中的数学

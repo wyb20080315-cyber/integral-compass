@@ -4,7 +4,7 @@ from .api import IntegralSolver, analyze, integrate
 from .models import IntegrationResult, IntegrationUndeterminedError, Step
 from .parser import ExpressionError
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __all__ = [
            "ExpressionError",
            "IntegralSolver",

@@ -49,7 +49,8 @@ Each linearity subproblem has its own J. Other unresolved ancestor cycles remain
 
 With no depth cap, iterative deepening fairly explores increasing finite depths.
 Automatic mode first spends at most 30% of the total budget on the Risch-only backend.
-A certified non-elementary remainder returns None/non_elementary. Otherwise the
+A certified non-elementary remainder returns the string "None, verified by Risch"
+with status non_elementary. Otherwise the
 remaining budget goes to classroom search, with a verified Risch answer retained
 as fallback. A finite depth disables that precheck so it cannot bypass the bound.
 The default total budget is 10 seconds; explicit timeout changes it in both modes.

@@ -25,7 +25,8 @@ def main():
             result = search_core(f, x, data.get("depth"))
     except Exception:  # noqa: BLE001 -- worker boundary converts backend faults to unknown
         result = IntegrationResult("unknown", f, x, method="backend_error", reason=
-                                   "The symbolic backend could not process this expression.")
+                                   "The symbolic backend could not process this expression.",
+                                   reason_code="backend_error")
     print(json.dumps(result.to_dict()))
 
 

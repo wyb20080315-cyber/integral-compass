@@ -31,18 +31,18 @@ For an existing PyPI project, add this publisher from that project's Publishing 
 
 1. Ensure the version in `pyproject.toml`, `__init__.py` and the changelog agree.
 2. Run tests, lint, `python -m build`, `python -m twine check dist/*`, and clean-wheel install.
-3. Push the corresponding Git tag (e.g. `v0.3.0`). Tags must be reviewed release commits.
-4. Run **Publish to PyPI** from GitHub Actions with `version_tag=v0.3.0`, or:
+3. Push the corresponding Git tag (e.g. `v0.4.0`). Tags must be reviewed release commits.
+4. Run **Publish to PyPI** from GitHub Actions with `version_tag=v0.4.0`, or:
 
    ```bash
-   gh workflow run publish.yml --ref main -f version_tag=v0.3.0
+   gh workflow run publish.yml --ref main -f version_tag=v0.4.0
    ```
 
 5. Inspect the workflow result, then verify the actual index page and fresh installation:
 
    ```bash
    python -m venv /tmp/compass-index-check
-   /tmp/compass-index-check/bin/python -m pip install integral-compass==0.3.0
+   /tmp/compass-index-check/bin/python -m pip install integral-compass==0.4.0
    /tmp/compass-index-check/bin/integral-compass 'x*exp(x)'
    ```
 

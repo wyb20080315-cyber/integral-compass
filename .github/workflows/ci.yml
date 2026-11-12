@@ -25,6 +25,8 @@ jobs:
       - run: ruff check .
       - run: python -m pytest -q
       - run: python examples/minimal_case.py
+      - run: python examples/presentation_demo.py
+      - run: python examples/failure_cases.py --internal
   build:
     runs-on: ubuntu-latest
     steps:

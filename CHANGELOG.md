@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0
+
+- Return the exact string "None, verified by Risch" for automatic non-elementarity proofs.
+- Include cause and explanation in every new-API unknown return message.
+- Add structured reason_code and value to reports/JSON, preserving Python None for depth exhaustion.
+- Distinguish unsupported root rules from unresolved integration-by-parts directions.
+- Add a concise one-minute presentation script, real minimal failure cases, and explicitly simulated internal faults.
+- Keep the classic compatibility API unchanged.
+
 ## 0.3.0
 
 - Detect return to the original integrand, including constant multiples, before the depth boundary.

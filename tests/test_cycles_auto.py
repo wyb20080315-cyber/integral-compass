@@ -44,7 +44,7 @@ def test_default_auto_mode_can_prove_nonelementarity():
     result = analyze("exp(-x**2)")
     assert result.status == "non_elementary"
     assert result.method == "risch"
-    assert integrate("exp(-x**2)") is None
+    assert integrate("exp(-x**2)") == "None, verified by Risch"
     assert not result.search_complete  # It is a Risch decision, not exhausted search.
 
 
@@ -104,4 +104,4 @@ def test_an_unproven_risch_integral_is_unknown(monkeypatch):
 
 def test_unknown_stays_unknown_if_both_engines_are_undecided():
     assert analyze("Abs(x)").status == "unknown"
-    assert integrate("Abs(x)") == "unknown"
+    assert integrate("Abs(x)").startswith("unknown, unsupported rule:")

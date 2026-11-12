@@ -1,43 +1,13 @@
-# 一分钟演示
+# 演示入口
 
-提前安装好包，打开 README 与终端，放大字体。先运行
-`python examples/minimal_case.py` 确认案例通过。PyPI 暂未发布，不宣称已发布。
-
-| 时间 | 内容 |
-| --- | --- |
-| 0–10 秒 | “从自己的积分笔记出发，我想让程序探索分部积分的两个方向，并显示解题步骤。” |
-| 10–30 秒 | 对 `x**2*exp(x)`，先设深度 2 得到 None，再设深度 3 得到正确原函数和 DI 步骤。 |
-| 30–50 秒 | 展示 `log(x)/(x+1)**2`，沿成功路径得到有理余项，再用部分分式完成积分。 |
-| 50–60 秒 | “限深失败和 Risch 证明无初等解都可返回 None，详细状态会区分；程序尚不能判断则返回 unknown。” |
-
-命令：
+当前一分钟安排、讲稿和所有失败类别的最小案例集中在
+[演讲资料](presentation.zh-CN.md)，避免不同版本的返回值说明混用。
 
 ```bash
-integral-compass 'x**2*exp(x)' --depth 2
-integral-compass 'x**2*exp(x)' --depth 3
-integral-compass 'log(x)/(x+1)**2' --depth 2
+python examples/presentation_demo.py
+python examples/presentation_demo.py --steps
+python examples/failure_cases.py
+python examples/failure_cases.py --internal
 ```
 
-## 问答
-
-**层数如何计算？** 原式为第 1 层，每次分部积分产生的余项进入下一层。
-
-**无限深会不会卡住？** 没有固定深度上限，但有独立进程的计算时限；超时返回 unknown。
-
-**None 是不是没有初等原函数？** 填深度时，None/exhausted 只是限深搜索失败；
-不填深度时，自动 Risch 可返回 None/non_elementary，才是证明没有初等原函数。
-unknown 表示尚不能判断。用 analyze(...).status 看清是哪一种。
-
-**循环怎么解？** 检测余项与子问题原式是否相差常数倍，保留路径系数与减号，
-建立并求解关于原积分 J 的一次方程，再验证导数。J=J 之类退化关系不能当作答案。
-
-**所有可能性真的都试了吗？** 所有规范化因子的非空分组及两个方向，最多八个因子。
-不声称枚举任意换元、任意恒等变形或所有数学积分技巧。
-
-**如果 I 那一边不会积分？** 该方向为 unknown，继续试另一方向；不能凭空构造 v。
-
-**自己实现了什么？** 两方向搜索、深度控制、搜索树、步骤展示、结果验证和包工程。
-SymPy 提供符号运算、部分分式与 Risch 后端；项目负责搜索、循环方程与自动调度。
-
-**AI 做了什么？** 使用 OpenAI Codex 协助开发、测试和文档。演讲者应理解代码，
-按真实参与情况介绍团队分工。
+Windows 测试包使用 run_demo.cmd 和 run_failures.cmd。
