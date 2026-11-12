@@ -51,12 +51,11 @@ def _di(f, x):
     slope = sp.diff(g.args[0], x)
     if slope == 0 or slope.has(x):
         return None
-    derivative, integral = p, g
+    derivative = p
+    basis, coefficient = g, sp.S.One
     terms, rows = [], []
     for i in range(int(degree) + 1):
         # Work with a separate basis and coefficient to avoid generic integrate calls.
-        if i == 0:
-            basis, coefficient = g, sp.S.One
         if basis.func == sp.exp:
             coefficient /= slope
         elif basis.func == sp.sin:

@@ -134,3 +134,24 @@ def test_result_json_and_explanation():
     assert json.loads(json.dumps(result.to_dict()))["status"] == "elementary"
     assert "DI table" in result.explain()
     assert "+ C" in result.explain()
+
+
+def test_unevaluated_integral_is_not_a_nonelementarity_certificate(monkeypatch):
+    from integral_compass import engine
+
+    x = sp.Symbol("x", real=True)
+    f = sp.sin(x**2)
+    ordinary_integral = sp.Integral(f, x)
+    monkeypatch.setattr(engine, "risch_integrate", lambda *a, **kw: (0, ordinary_integral))
+    monkeypatch.setattr(engine.sp, "integrate", lambda *a, **kw: ordinary_integral)
+    assert engine.analyze_core(f, x).status == "unknown"
+
+
+def test_wrong_elementary_candidate_must_pass_verification(monkeypatch):
+    from integral_compass import engine
+
+    x = sp.Symbol("x", real=True)
+    f = sp.exp(x**2)
+    monkeypatch.setattr(engine, "risch_integrate", lambda *a, **kw: (x, 0))
+    monkeypatch.setattr(engine.sp, "integrate", lambda *a, **kw: x)
+    assert engine.analyze_core(f, x).status == "unknown"
