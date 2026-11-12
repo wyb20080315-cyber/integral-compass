@@ -1,117 +1,97 @@
-# 中文使用指南
+# 0.4 中文指南
 
-## 项目动机与贡献
-
-本项目来自个人微积分笔记中的问题：能不能把课堂上的积分步骤变成程序，并且分辨
-“没有初等原函数”和“程序不会算”？目标用户是正在学习换元、分部积分和部分分式的学生。
-
-项目贡献是可解释的课堂策略、DI 表格、部分分式步骤、求导验证和严格的三状态接口。
-底层代数运算与 Risch 后端依赖 SymPy。我们没有从零实现完整 Risch，也不声称发明新的积分算法。
-Risch 是扩展能力，团队答辩的重点可以放在课堂方法和返回值语义。
-
-## 安装与环境
-
-需要 Python 3.10+。源码安装流程见仓库 README。开发者在虚拟环境内运行：
-
-```bash
-python -m pip install -e '.[dev]'
-python -m pytest
-```
-
-PyPI 发布完成后可运行 `python -m pip install integral-compass`。
-在未发布或账号绑定未完成时，使用源码安装即可完整运行，不必等待 PyPI。
-
-## 基础接口
+## 现在怎样返回
 
 ```python
-from integral_compass import analyze, integrate, IntegrationUndeterminedError
+from integral_compass import integrate, analyze
 
-r = analyze("x**2 * exp(x)")
-print(r.status)          # elementary
-print(r.method)          # di
-print(r.antiderivative)  # (x**2 - 2*x + 2)*exp(x)
-print(r.verified)        # True
-print(r.explain())       # 表格、步骤、验证结果
-print(r.to_dict())       # 可序列化的结构化结果
-
-answer = integrate("x**2 * exp(x)")  # 直接取原函数，不附加 C
-assert integrate("exp(-x**2)") is None
-
-try:
-    integrate("Abs(x)")
-except IntegrationUndeterminedError as exc:
-    print(exc.result.reason)
+print(integrate("x*exp(x)", 2))  # 成功：返回 (x-1)*exp(x)，默认打印步骤
+print(integrate("x*exp(x)", 1))  # Python 的 None：限深搜索耗尽
+print(integrate("exp(-x**2)"))   # 字符串 "None, verified by Risch"
+print(integrate("Abs(x)", 1))   # unknown, unsupported rule: 后接解释
 ```
 
-默认变量是实数 `x`。自定义变量：
+只有 Risch 确实证明无初等原函数时，才返回那个证书字符串。
+没有填写深度但求解成功时，仍返回原函数；无法判定时，返回带原因的 unknown。
+Python None 和字符串 "None, verified by Risch" 是不同类型，不要混用。
 
-```python
-import sympy as sp
-from integral_compass import integrate
+| 返回 | 含义 |
+| --- | --- |
+| 原函数表达式 | 找到解并通过求导验证，省略 C |
+| Python None | 设定深度内生成的路线都检查完，没有成功 |
+| "None, verified by Risch" | Risch 后端证明无初等原函数；不表示没有任何原函数或不能数值积分 |
+| "unknown, timeout: ..." | 时间用完，计算未结束 |
+| "unknown, unsupported rule: ..." | 当前表达式需要本版没有实现的规则 |
+| "unknown, unresolved branches: ..." | 搜索已经展开，但仍有方向无法评估 |
+| "unknown, backend error: ..." | 工作进程故障或返回了无效结果 |
+| "unknown, verification failed: ..." | 候选答案未通过检查，不作为答案返回 |
 
-t = sp.Symbol("t", positive=True)
-F = integrate(t**2 * sp.exp(t), t)  # 将同一个 Symbol 传入以保留假设
-print(sp.simplify(sp.diff(F, t) - t**2 * sp.exp(t)))  # 0
-```
+## 规则不支持和分支未决有什么区别
 
-## 案例一：DI 表格
+**规则不支持：`Abs(x)`。** 它是绝对值函数，数学上有原函数，例如 x*Abs(x)/2。
+但本版尚未实现相应的分段/绝对值规则，所以在输入节点就能明确说明这个限制。
 
-输入 `x**2 * exp(x)`。将多项式反复求导到零，对指数反复积分：
+**分支未决：`log(x)**2`，深度 2。** 按两个方向探索：
 
-| 符号 | D（求导） | I（积分） |
-| --- | --- | --- |
-| + | x² | exp(x) |
-| − | 2x | exp(x) |
-| + | 2 | exp(x) |
-| 停止 | 0 | 余项消失 |
+1. 对 log(x)**2 求导，对 1 积分，余项为 2*log(x)。它到第 2 层，不能继续展开。
+2. 对 1 求导，对 log(x)**2 积分。要先拿到 v，但当前基本积分表不能直接提供 v。
 
-得到 `(x**2 - 2*x + 2)*exp(x) + C`。算法也处理线性内函数的斜率，
-例如 `x**2*sin(3*x+2)`，每次积分都包含对应的 `1/3` 因子。
-第一版不处理所有可能的 DI 循环情形。
-
-## 案例二：重复二次因子的部分分式
-
-```python
-print(analyze("1/((x+1)*(x**2+1)**2)").explain())
-```
-
-先检查是否需要多项式长除法，然后分解：
+第二条路线并没有完成判断，因此不能说“全部路线失败”而返回 None。
+把深度设为 3，第一条路线可继续做分部积分，最后得到：
 
 ```text
-1/(4*(x+1)) - (x-1)/(4*(x**2+1)) - (x-1)/(2*(x**2+1)**2)
+x*(log(x)**2 - 2*log(x) + 2)
 ```
 
-对应笔记里的规则：一次因子上放常数；不可约二次因子上放一次式；
-重复因子必须包含从一次到最高次的全部分母幂。拆分和每项积分由 SymPy 提供，
-项目负责调度、展示、实数对数形式和最终验证。
+两种解释有关联：未决分支也可能源于某个子步骤缺少规则。
+前者指出当前表达式的直接能力边界，后者指出搜索树仍有未能评估的方向。
 
-## 案例三：无初等原函数
+## 深度和时间
 
-`exp(-x**2)` 没有初等函数形式的原函数，但有用特殊函数 erf 表示的原函数，
-也可以计算定积分或数值积分。这里 `None` 只表示前一种限制。
+原式是第 1 层，每做一次分部积分，余项进入下一层。
+填深度时只用课堂规则，不让 Risch 绕过层数限制。
+不填深度时自动结合 Risch 和无固定层数上限的搜索，总时间默认 10 秒。
+Risch 预判最多用 30% 时间，剩余时间用于课堂搜索；已验证的 Risch 解可作为后备。
+`timeout=30` 只把总时间改为 30 秒，不会关闭 Risch。
 
-Risch 后端目前主要支持指数、对数构成的超越表达式，不能对所有输入作出判断。
-若一个未求值积分来自通用积分器，不能据此返回 `None`。
+## 展示类和循环方程
 
-## 命令行与失败处理
-
-```bash
-integral-compass 'x**2 * exp(x)'
-integral-compass '1/(x*(x+1))' --json
-integral-compass 't*cos(t)' --variable t
-integral-compass 'exp(-x**2)' --timeout 10
+```python
+from integral_compass import IntegralSolver
+problem = IntegralSolver("exp(x)*sin(x)", 3)
+answer = problem.solve()
+problem.show_tree()
 ```
 
-CLI 退出码：0 表示已判定（有初等解或已证明无初等解）；2 表示输入错误；3 表示 unknown。
-`analyze()` 遇到超时、后端失败或无法验证时返回 unknown；输入不合法则抛出 `ExpressionError`。
-`integrate()` 对 unknown 抛出 `IntegrationUndeterminedError`，不能把它吞掉改成 `None`。
+如果余项与子问题原式相同或相差常数倍，程序建立关于原积分 J 的方程。
+保留系数与减号后，例如 J=exp(x)*(sin(x)-cos(x))-J，可解出 J。
+J=J 一类退化关系不能作为答案。所有候选原函数都需通过求导检查。
 
-## 使用边界
+`.analyze()` 静默计算，`.solve()` 返回值且成功时打印实际步骤，`.show()` 显示结果，
+`.show_tree()` 显示已探索分支；同一问题会缓存结果。
+想关闭自动输出，用 `show_steps=False`。
 
-使用 `*` 写乘法、`**` 写乘方，`log` 表示自然对数。只支持一个变量，不接受
-含额外参数的式子、用户自定义函数或任意 Python callable。字符串最多 2000 字符、
-200 个 AST 节点，数值指数范围 −100 到 100。结果不附加积分常数 C。
+## 稳定地检查原因
 
-默认实变量下，有理函数的实对数写为 `log(Abs(...))`。结果在避开零点、极点和分支边界的
-局部区间成立，不自动给出完整定义域。分段原函数、数值积分和定积分不属于本版范围。
-复杂表达式超时仍可使用更长的 `timeout` 重试，但更长时间不保证一定得到结论。
+```python
+r = analyze("log(x)**2", 2)
+print(r.status)       # unknown
+print(r.reason_code)  # unresolved_branch
+print(r.reason)       # 具体是哪一个方向未完成
+print(r.value)        # 与 integrate() 的返回值一致
+print(r.to_dict())    # 也包含 value 和 reason_code
+```
+
+不要只检查 antiderivative 是否为 None；失败时它都是空的，应查看 status 或 value。
+非法输入会抛异常，例如 1/0、深度 0、时间 0，不伪装成数学上的 unknown。
+兼容模块 integral_compass.classic 继续保留旧版 Python None/异常语义。
+
+## 当前范围
+
+单变量表达式，乘法写 *，乘方写 **，自然对数写 log，不接受任意 Python 函数代码。
+支持基本公式、DI、部分分式与循环方程；多因子分组最多八个规范化因子，
+有理函数终点次数上限为 30。Risch 后端也不覆盖全部表达式，所以默认模式仍可能 unknown。
+结果在避开奇点与分支边界的局部区间成立，不自动求完整定义域。
+
+Windows 操作见 [本机指南](windows.zh-CN.md)，最小失败案例和一分钟安排见
+[演讲资料](presentation.zh-CN.md)。PyPI 仍按项目所有者要求暂缓发布。
