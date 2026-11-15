@@ -8,9 +8,8 @@ import sympy as sp
 from integral_compass import (
     ExpressionError,
     IntegrationUndeterminedError,
-    analyze,
-    integrate,
 )
+from integral_compass.classic import analyze, integrate
 
 
 @pytest.mark.parametrize("expression,method", [
@@ -116,7 +115,7 @@ def test_invalid_timeout(timeout):
 
 
 def test_cli_json_and_exit_codes():
-    command = [sys.executable, "-m", "integral_compass"]
+    command = [sys.executable, "-m", "integral_compass", "--classic"]
     success = subprocess.run(command + ["x*exp(x)", "--json"],
                              capture_output=True, text=True, check=False)
     assert success.returncode == 0

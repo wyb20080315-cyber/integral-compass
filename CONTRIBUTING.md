@@ -2,7 +2,8 @@
 
 Use a personal branch and pull request. Include the problem, change and verification.
 Run `python -m pytest` and `ruff check .` before requesting review.
-Do not change unknown outcomes into `None` without a valid non-elementarity decision.
+In search mode, unknown must not become None unless every generated bounded branch
+is exhausted. In classic mode, None still requires a non-elementarity decision.
 Integration tests should compare derivatives, not just printer formatting.
 
 ## Small, independent team tasks

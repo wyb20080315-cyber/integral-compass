@@ -1,4 +1,43 @@
-# Local validation record
+# Validation records
+
+## 0.4 explanatory outcomes and presentation cases
+
+Python 3.12 / SymPy 1.14.0: all 96 local tests passed, including the unchanged
+classic contract. Ruff and the real failure-case/presentation scripts passed.
+The diagnostics explicitly distinguish Python None from the Risch-certificate
+string, root unsupported rules from unresolved directions, timeouts, injected
+worker failures and forced verification failure. Simulated faults are labeled
+and do not claim to be normal mathematical inputs.
+The refreshed distributions/offline kit and cross-platform CI are checked separately.
+
+## 0.3 cyclic equations and automatic Risch
+
+The cycle/default-mode changes passed 89 local tests on Python 3.12 with SymPy 1.14.0.
+After simplifying timeout-mode selection, the 39 search/auto tests were rerun and passed;
+the original 50 classic tests remain unchanged. Seven minimal cases passed.
+New coverage includes signed/scaled recurrences, depth-boundary closure, rejection of
+degenerate identities, independent summand equations, Risch certificates versus unknown,
+Risch fallback and preservation of automatic mode with an explicit timeout.
+The refreshed 0.3 distributions and offline test kit are validated separately.
+
+## 0.2 depth-controlled search
+
+Locally validated on Python 3.12 with SymPy 1.14.0: 74 tests passed, Ruff passed,
+and the five user-facing minimal cases passed. The wheel and source distribution
+passed Twine checks. The Windows x64 Python installer was downloaded unchanged
+from python.org; its URL and SHA256 are documented in windows.zh-CN.md.
+An offline test kit bundles the package, SymPy and mpmath wheels.
+
+The new tests exercise root-level counting, both directions and all four third-level
+leaves, deeper success after bounded exhaustion, reverse-direction success,
+actual partial-fraction leaves, unbounded search, cycles, unknown propagation,
+timeouts, class output/caching, custom symbols, linearity and CLI behavior.
+The 50 original tests continue to verify the separate classic contract.
+
+The CI record below applies to 0.1. The 0.2 PR subsequently passed all five test jobs
+and its build job in run 43161174564; its expanded suite had 74 tests.
+
+## 0.1 local checks
 
 Validated on Python 3.12 in the managed Linux workspace on 2026-11-12.
 
