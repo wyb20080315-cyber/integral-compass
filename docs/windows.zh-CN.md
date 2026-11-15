@@ -56,8 +56,8 @@ py -3.13 -m venv .venv
 .\.venv\Scripts\python.exe .\examples\minimal_case.py
 ```
 
-源码安装需要联网取得依赖。包暂未发布到 PyPI，不要直接运行
-`pip install integral-compass` 并期待从索引找到它。
+源码安装需要联网取得依赖。PyPI 发行确认后，也可用
+`python -m pip install integral-compass==0.4.0` 从索引安装。
 
 ## 4. 自己写第一个程序
 

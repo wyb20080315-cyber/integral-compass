@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       version_tag:
-        description: 'Existing version tag, e.g. v0.1.0'
+        description: 'Existing version tag, e.g. v0.4.0'
         required: true
 permissions:
   contents: read

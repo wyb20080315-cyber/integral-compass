@@ -8,8 +8,8 @@ argument is `depth=None`, meaning no depth cap. Without a depth limit, automatic
 mode combines Risch and classroom search under a shared 10-second budget.
 An explicit `timeout` changes the budget without disabling Risch.
 
-[中文指南](docs/guide.zh-CN.md) · [Windows installation](docs/windows.zh-CN.md) ·
-[API](docs/api.md) · [Mathematics](docs/mathematics.md) · [One-minute demo](docs/demo.zh-CN.md)
+[中文指南](https://github.com/wyb20080315-cyber/integral-compass/blob/main/docs/guide.zh-CN.md) · [Windows installation](https://github.com/wyb20080315-cyber/integral-compass/blob/main/docs/windows.zh-CN.md) ·
+[API](https://github.com/wyb20080315-cyber/integral-compass/blob/main/docs/api.md) · [Mathematics](https://github.com/wyb20080315-cyber/integral-compass/blob/main/docs/mathematics.md) · [One-minute demo](https://github.com/wyb20080315-cyber/integral-compass/blob/main/docs/demo.zh-CN.md)
 
 ## Why this project?
 
@@ -22,7 +22,8 @@ backend remains available separately; we do not claim to implement full Risch.
 
 ## Install from source
 
-Requires Python 3.10+. PyPI publication is currently deferred.
+Requires Python 3.10+. Version 0.4.0 is prepared for publication; verify the actual
+PyPI project page before installing from the index.
 
 ```bash
 git clone https://github.com/wyb20080315-cyber/integral-compass.git
@@ -150,8 +151,8 @@ python -m build
 python -m twine check dist/*
 ```
 
-[CONTRIBUTING.md](CONTRIBUTING.md) explains genuine team contributions.
-[Publishing](docs/releasing.md) is prepared but not enabled by a PyPI account binding.
+[CONTRIBUTING.md](https://github.com/wyb20080315-cyber/integral-compass/blob/main/CONTRIBUTING.md) explains genuine team contributions.
+[Publishing](https://github.com/wyb20080315-cyber/integral-compass/blob/main/docs/releasing.md) is prepared but not enabled by a PyPI account binding.
 The package and documentation were developed with OpenAI Codex assistance; contributors
 should review and understand submitted code. Algorithms are standard mathematics;
 [SymPy](https://www.sympy.org/) is the symbolic backend. MIT licensed.
@@ -169,6 +170,6 @@ should review and understand submitted code. Algorithms are standard mathematics
 The last example succeeds at depth 3. An unresolved direction may itself be blocked
 by a missing side-primitive rule; these explanations describe different places in
 the computation, not wholly unrelated mathematical categories. See the
-[one-minute presentation and backup cases](docs/presentation.zh-CN.md).
+[one-minute presentation and backup cases](https://github.com/wyb20080315-cyber/integral-compass/blob/main/docs/presentation.zh-CN.md).
 Input errors remain exceptions. Software faults/verification failures have clearly
 labeled simulations in `python examples/failure_cases.py --internal`.

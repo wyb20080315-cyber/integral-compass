@@ -94,4 +94,4 @@ print(r.to_dict())    # 也包含 value 和 reason_code
 结果在避开奇点与分支边界的局部区间成立，不自动求完整定义域。
 
 Windows 操作见 [本机指南](windows.zh-CN.md)，最小失败案例和一分钟安排见
-[演讲资料](presentation.zh-CN.md)。PyPI 仍按项目所有者要求暂缓发布。
+[演讲资料](presentation.zh-CN.md)。PyPI 的发布与核实步骤见[发布说明](releasing.md)。

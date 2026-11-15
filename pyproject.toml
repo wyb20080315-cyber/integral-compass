@@ -27,7 +27,7 @@ dev = ["pytest>=8,<10", "build>=1.2", "twine>=6", "ruff>=0.9"]
 [project.urls]
 Homepage = "https://github.com/wyb20080315-cyber/integral-compass"
 Repository = "https://github.com/wyb20080315-cyber/integral-compass"
-Documentation = "https://github.com/wyb20080315-cyber/integral-compass/blob/main/docs/guide.zh-CN.md"
+Documentation = "https://github.com/wyb20080315-cyber/integral-compass/blob/main/docs/README.md"
 Issues = "https://github.com/wyb20080315-cyber/integral-compass/issues"
 
 [project.scripts]

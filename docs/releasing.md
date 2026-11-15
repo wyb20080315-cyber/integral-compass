@@ -3,8 +3,8 @@
 The distribution is `integral-compass`; the import is `integral_compass`.
 Repository/homepage: https://github.com/wyb20080315-cyber/integral-compass.
 
-Publication is currently deferred at the project owner's request. Do not run the
-publishing workflow until that changes.
+Version 0.4.0 is prepared for publication. The project owner has authorized release.
+Only report it as published after the workflow and fresh index installation succeed.
 
 ## One-time account setup
 
