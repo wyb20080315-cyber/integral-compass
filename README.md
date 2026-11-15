@@ -11,6 +11,9 @@ An explicit `timeout` changes the budget without disabling Risch.
 [中文指南](https://github.com/wyb20080315-cyber/integral-compass/blob/main/docs/guide.zh-CN.md) · [Windows installation](https://github.com/wyb20080315-cyber/integral-compass/blob/main/docs/windows.zh-CN.md) ·
 [API](https://github.com/wyb20080315-cyber/integral-compass/blob/main/docs/api.md) · [Mathematics](https://github.com/wyb20080315-cyber/integral-compass/blob/main/docs/mathematics.md) · [One-minute demo](https://github.com/wyb20080315-cyber/integral-compass/blob/main/docs/demo.zh-CN.md)
 
+[PyPI 0.4.0](https://pypi.org/project/integral-compass/0.4.0/) ·
+[Documentation index](https://github.com/wyb20080315-cyber/integral-compass/blob/main/docs/README.md)
+
 ## Why this project?
 
 The idea came from a student's own calculus notes: can a program follow DI and
@@ -20,10 +23,16 @@ class-based explanation and exact derivative check. SymPy supplies algebra,
 partial-fraction decomposition and rational-term integration. The classic Risch
 backend remains available separately; we do not claim to implement full Risch.
 
-## Install from source
+## Install from PyPI
 
-Requires Python 3.10+. Version 0.4.0 is prepared for publication; verify the actual
-PyPI project page before installing from the index.
+Requires Python 3.10+. Version 0.4.0 was published on 2026-11-15 and verified by
+installation from PyPI in a fresh virtual environment.
+
+```bash
+python -m pip install integral-compass==0.4.0
+```
+
+## Install from source
 
 ```bash
 git clone https://github.com/wyb20080315-cyber/integral-compass.git

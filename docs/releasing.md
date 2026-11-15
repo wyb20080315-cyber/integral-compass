@@ -3,8 +3,14 @@
 The distribution is `integral-compass`; the import is `integral_compass`.
 Repository/homepage: https://github.com/wyb20080315-cyber/integral-compass.
 
-Version 0.4.0 is prepared for publication. The project owner has authorized release.
-Only report it as published after the workflow and fresh index installation succeed.
+Version 0.4.0 was published successfully on 2026-11-15 and independently installed
+from PyPI in a fresh environment. Its homepage points to the Git repository and its
+Documentation field points to the public documentation index.
+
+[Published version](https://pypi.org/project/integral-compass/0.4.0/) ·
+[Successful publishing workflow, attempt 3](https://github.com/wyb20080315-cyber/integral-compass/actions/runs/43689039140)
+
+The instructions below apply to future releases. Uploaded PyPI versions are immutable.
 
 ## One-time account setup
 

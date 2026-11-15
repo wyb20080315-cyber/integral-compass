@@ -3,6 +3,7 @@
 **版本：0.4.0 · Python 3.10+ · MIT 许可证**
 
 [公开仓库](https://github.com/wyb20080315-cyber/integral-compass) ·
+[PyPI 0.4.0](https://pypi.org/project/integral-compass/0.4.0/) ·
 [项目介绍与安装](../README.md) ·
 [PyPI 发布说明](releasing.md)
 
@@ -40,5 +41,10 @@ print(integrate("exp(-x**2)"))  # 字符串 "None, verified by Risch"
 print(integrate("Abs(x)", 1))  # unknown, unsupported rule: ...
 ```
 
+0.4.0 已于 2026-11-15 发布到 PyPI，并通过全新环境安装与功能验证：
+
+```bash
+python -m pip install integral-compass==0.4.0
+```
+
 源码安装、演示脚本和测试命令见[项目首页](../README.md)。
-PyPI 发行版本以实际项目页面与发布工作流的成功结果为准。

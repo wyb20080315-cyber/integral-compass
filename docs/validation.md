@@ -1,5 +1,21 @@
 # Validation records
 
+## Published PyPI release 0.4.0 — 2026-11-15
+
+Publishing run 43689039140 succeeded on attempt 3 after the account owner configured
+the trusted publisher. PyPI returned HTTP 200 for version 0.4.0 and listed both wheel
+and source distribution. Homepage and Documentation metadata point to the public
+Git repository and documentation index.
+
+Installed `integral-compass==0.4.0` from `https://pypi.org/simple` with cache disabled
+in a new virtual environment outside the source checkout. Seven smoke checks passed:
+DI primitive and derivative, depth exhaustion, Risch-certificate string, unsupported
+rule message, unresolved-branch message, cyclic equation and rational partial fractions.
+The installed CLI also returned a verified elementary result.
+
+- Wheel SHA256: `93b6d03faa0d26072fb2035a169132ec37861f3e14685e1187c7778bf59d77f5`
+- Source SHA256: `b51172b6d09c662537149ccf691d545cfe6c9fb23d9ffc05c456f6ebd8c86d11`
+
 ## 0.4 explanatory outcomes and presentation cases
 
 Python 3.12 / SymPy 1.14.0: all 96 local tests passed, including the unchanged
